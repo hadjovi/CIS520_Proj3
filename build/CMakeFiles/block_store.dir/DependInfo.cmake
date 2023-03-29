@@ -1,21 +1,25 @@
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
+  "C"
   )
 # The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "/homes/hadjovi/Proj3/CIS520_Proj3/test/tests.cpp" "/homes/hadjovi/Proj3/CIS520_Proj3/build/CMakeFiles/hw3_test.dir/test/tests.cpp.o"
+set(CMAKE_DEPENDS_CHECK_C
+  "/homes/hadjovi/Proj3/CIS520_Proj3/src/block_store.c" "/homes/hadjovi/Proj3/CIS520_Proj3/build/CMakeFiles/block_store.dir/src/block_store.c.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_C_COMPILER_ID "GNU")
+
+# Preprocessor definitions for this target.
+set(CMAKE_TARGET_DEFINITIONS_C
+  "block_store_EXPORTS"
+  )
 
 # The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
+set(CMAKE_C_TARGET_INCLUDE_PATH
   "../include"
   )
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/homes/hadjovi/Proj3/CIS520_Proj3/build/CMakeFiles/block_store.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named block_store.so
+# Target rules for targets named block_store
 
 # Build rule for target.
-block_store.so: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 block_store.so
-.PHONY : block_store.so
+block_store: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 block_store
+.PHONY : block_store
 
 # fast build rule for target.
-block_store.so/fast:
-	$(MAKE) -f CMakeFiles/block_store.so.dir/build.make CMakeFiles/block_store.so.dir/build
-.PHONY : block_store.so/fast
+block_store/fast:
+	$(MAKE) -f CMakeFiles/block_store.dir/build.make CMakeFiles/block_store.dir/build
+.PHONY : block_store/fast
 
 #=============================================================================
 # Target rules for targets named hw3_test
@@ -142,7 +142,7 @@ src/block_store.o: src/block_store.c.o
 
 # target to build an object file
 src/block_store.c.o:
-	$(MAKE) -f CMakeFiles/block_store.so.dir/build.make CMakeFiles/block_store.so.dir/src/block_store.c.o
+	$(MAKE) -f CMakeFiles/block_store.dir/build.make CMakeFiles/block_store.dir/src/block_store.c.o
 .PHONY : src/block_store.c.o
 
 src/block_store.i: src/block_store.c.i
@@ -151,7 +151,7 @@ src/block_store.i: src/block_store.c.i
 
 # target to preprocess a source file
 src/block_store.c.i:
-	$(MAKE) -f CMakeFiles/block_store.so.dir/build.make CMakeFiles/block_store.so.dir/src/block_store.c.i
+	$(MAKE) -f CMakeFiles/block_store.dir/build.make CMakeFiles/block_store.dir/src/block_store.c.i
 .PHONY : src/block_store.c.i
 
 src/block_store.s: src/block_store.c.s
@@ -160,7 +160,7 @@ src/block_store.s: src/block_store.c.s
 
 # target to generate assembly for a file
 src/block_store.c.s:
-	$(MAKE) -f CMakeFiles/block_store.so.dir/build.make CMakeFiles/block_store.so.dir/src/block_store.c.s
+	$(MAKE) -f CMakeFiles/block_store.dir/build.make CMakeFiles/block_store.dir/src/block_store.c.s
 .PHONY : src/block_store.c.s
 
 test/tests.o: test/tests.cpp.o
@@ -198,7 +198,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... block_store.so"
+	@echo "... block_store"
 	@echo "... hw3_test"
 	@echo "... src/block_store.o"
 	@echo "... src/block_store.i"
