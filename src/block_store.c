@@ -10,15 +10,20 @@
 
 block_store_t *block_store_create()
 {
-    return NULL;
+    block_store_t *bs = malloc(sizeof(BLOCK_SIZE_BITS));
+    return bs;
 }
 
 void block_store_destroy(block_store_t *const bs)
 {
-    UNUSED(bs);
+    free(bs);
 }
 size_t block_store_allocate(block_store_t *const bs)
 {
+    if(bs == NULL)
+    {
+        return SIZE_MAX;
+    }
     UNUSED(bs);
     return 0;
 }
