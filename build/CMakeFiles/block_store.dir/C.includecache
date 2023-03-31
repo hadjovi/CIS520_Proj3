@@ -22,6 +22,12 @@ stdlib.h
 stdbool.h
 -
 
+/homes/hadjovi/Proj3/CIS520_Proj3/src/bitmap.c
+bitmap.h
+/homes/hadjovi/Proj3/CIS520_Proj3/src/bitmap.h
+string.h
+-
+
 /homes/hadjovi/Proj3/CIS520_Proj3/src/block_store.c
 stdio.h
 -
@@ -29,6 +35,14 @@ stdint.h
 -
 bitmap.h
 /homes/hadjovi/Proj3/CIS520_Proj3/src/bitmap.h
+bitmap.c
+/homes/hadjovi/Proj3/CIS520_Proj3/src/bitmap.c
 block_store.h
 /homes/hadjovi/Proj3/CIS520_Proj3/src/block_store.h
+sys/stat.h
+-
+fcntl.h
+-
+unistd.h
+-
 
