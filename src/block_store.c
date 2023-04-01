@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 // include more if you need
 
@@ -20,29 +21,37 @@ struct block_store{
 
 block_store_t *block_store_create()
 {
-    block_store_t *bs = malloc(BLOCK_STORE_NUM_BYTES);
-    if(bs == NULL){
-        return NULL;
+    bitmap_t *test = bitmap_create(BITMAP_SIZE_BYTES * 8);
+    
+    block_store_t *bs = malloc(BLOCK_STORE_NUM_BLOCKS * sizeof(test));
+    
+    for(int j = 0; j < BLOCK_STORE_NUM_BLOCKS; j++){
+        bs[j].data = bitmap_create(BITMAP_SIZE_BYTES * 8);
     }
-
-    bitmap_t * a[BLOCK_STORE_NUM_BLOCKS];
-
-    for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++){
-        a[i] = bitmap_create(BLOCK_SIZE_BYTES);
-    }
-
-    bs->data = *a;
+    
+    free(test);
     return bs;
 }
 
 
 void block_store_destroy(block_store_t *const bs)
 {
+    int c = 0;
     if(bs == NULL){
         return;
     }
-    if(bs){
-        bitmap_destroy(bs->data);
+    if(bs)
+    {
+        for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+        {            
+            //printf(" Block num: %d\n", c);
+            c++;
+            if(bs[i].data)
+            {
+                bitmap_destroy(bs[i].data);
+            }            
+        }
+        //bitmap_destroy(bs->data);
     }
     free(bs);
 }
@@ -52,14 +61,14 @@ size_t block_store_allocate(block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    size_t bit = bitmap_ffz(bs->data);
+    size_t bit = bitmap_ffz(bs[127].data);
     if(bit >= BLOCK_STORE_AVAIL_BLOCKS){
         return SIZE_MAX;
     }
     if(bit == SIZE_MAX){
         return SIZE_MAX;
     }
-    bitmap_set(bs->data, bit);
+    bitmap_set(bs[127].data, bit);
     return bit;
 }
 
@@ -68,10 +77,10 @@ bool block_store_request(block_store_t *const bs, const size_t block_id)
    if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS){
         return false;
     }
-    if(bitmap_test(bs->data, block_id)){
+    if(bitmap_test(bs[127].data, block_id)){
 		return false;
 	}
-    bitmap_set(bs->data,block_id);
+    bitmap_set(bs[127].data, block_id);
     return true;
 }
 
@@ -80,7 +89,7 @@ void block_store_release(block_store_t *const bs, const size_t block_id)
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS){
         return;
     }
-    bitmap_reset(bs->data,block_id);
+    bitmap_reset(bs[127].data,block_id);
 }
 
 size_t block_store_get_used_blocks(const block_store_t *const bs)
@@ -88,7 +97,7 @@ size_t block_store_get_used_blocks(const block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    return bitmap_total_set(bs->data);
+    return bitmap_total_set(bs[127].data);
 }
 
 size_t block_store_get_free_blocks(const block_store_t *const bs)
@@ -96,7 +105,7 @@ size_t block_store_get_free_blocks(const block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    return BLOCK_STORE_AVAIL_BLOCKS - bitmap_total_set(bs->data);
+    return BLOCK_STORE_AVAIL_BLOCKS - bitmap_total_set(bs[127].data);
 }
 
 size_t block_store_get_total_blocks()
@@ -110,8 +119,8 @@ size_t block_store_read(const block_store_t *const bs, const size_t block_id, vo
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS || buffer == NULL){
         return 0;
     }
-    
-    memcpy(buffer, &bs->data[block_id], BLOCK_SIZE_BYTES);
+        
+    memcpy(buffer, bs[block_id].data->data, BLOCK_SIZE_BYTES/8);
 
     return BLOCK_SIZE_BYTES;
 }
@@ -123,8 +132,8 @@ size_t block_store_write(block_store_t *const bs, const size_t block_id, const v
         return 0;
     }
 
-    memcpy(&bs->data[block_id], buffer, BLOCK_SIZE_BYTES);
-
+    bs[block_id].data = bitmap_import(BLOCK_SIZE_BYTES, buffer);
+    
     return BLOCK_SIZE_BYTES;
 }
 
@@ -136,38 +145,38 @@ block_store_t *block_store_deserialize(const char *const filename)
     }
 
     int i = 0;
-	while(((char*)filename)[i] != '\0'){
-		if(((char*)filename)[i] == '\n'){
-			return false;
-		}
-		i++;
-	}
+    while(((char*)filename)[i] != '\0'){
+        if(((char*)filename)[i] == '\n'){
+            return NULL;
+        }
+        i++;
+    }
 
     //Open the file to read
-    int fd = open(filename, O_RDONLY);
+    int fd = open(filename, O_RDONLY, 0777);
     if(fd == -1){
-        printf("FAILED TO OPEN DESER");
         return NULL;
     }
 
-    //Move to the approprate offset
+    // void * buffer = malloc(BLOCK_STORE_NUM_BYTES);
+
+    block_store_t *bs = malloc(BLOCK_STORE_NUM_BYTES);
+    bs = block_store_create();
+    // if(read(fd, bs, BLOCK_SIZE_BYTES)  == -1){
+    //     close(fd);
+    //     return NULL;
+    // }
+    for(i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++){
+        read(fd, bs[i].data, BITMAP_SIZE_BYTES);
+    }
+    
 
     //Read in the file using the read function
-    void * buffer = malloc(BLOCK_SIZE_BYTES);
-    if(read(fd, buffer, BLOCK_SIZE_BYTES)  == -1){
-        close(fd);
-        printf("FAILED TO READ DESER");
-        return false;
-    }
-
-    block_store_t *bs = malloc(BLOCK_SIZE_BYTES);
-    memcpy(bs, buffer, BLOCK_SIZE_BYTES);
     
-    //If the file closes successfully the bulk read has been successful
-    if(close(fd) != 0){
-        printf("FAILED TO CLOSE FILE DESER");
-        return NULL;
-    }
+    // bs = block_store_create();
+    // bs->data = buffer;
+
+    close(fd);
     return bs;
 }
 
@@ -179,34 +188,28 @@ size_t block_store_serialize(const block_store_t *const bs, const char *const fi
     }
 
     int i = 0;
-	while(((char*)filename)[i] != '\0'){
-		if(((char*)filename)[i] == '\n'){
-			return 0;
-		}
-		i++;
-	}
+    while(((char*)filename)[i] != '\0'){
+        if(((char*)filename)[i] == '\n'){
+            printf("BAD FILENAME\n");
+            return 0;
+        }
+        i++;
+    }
+    int errno;
+    //Open(or create) the file for writing
+    int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+    if(fd == -1){
+        printf("FAILED TO OPEN\n");
+        printf("ERROR: %d\n", errno);
+        return 0;
+    }
 
-    // //Open(or create) the file for writing
-    // int fd = open(filename, O_WRONLY | O_CREAT);
-    // if(fd == -1){
-    //     printf("FAILED TO OPEN SER\n");
-    //     return 0;
-    // }
-
-    FILE *fpt;
-    fpt=fopen(filename, "w+");
-
-    void * buffer = malloc(BLOCK_STORE_NUM_BYTES);
-    memcpy(buffer, bs, BLOCK_STORE_NUM_BYTES);
-
-    // if( write(fd, buffer, BLOCK_STORE_NUM_BYTES) == -1){
-    //     close(fd);
-    //     printf("FAILED TO WRITE SER\n");
-    //     return 0;
-    // }
     
-    fputs(buffer, fpt);
+    // void * buffer = malloc(BLOCK_STORE_NUM_BYTES);
     
-    fclose(fpt);
+    write(fd,bs,BLOCK_STORE_NUM_BYTES);
+
+    close(fd);
+
     return BLOCK_STORE_NUM_BYTES;
 }
