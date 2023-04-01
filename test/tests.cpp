@@ -304,6 +304,7 @@ TEST(block_store_write_read, valid_write_and_read) {
     ASSERT_EQ(bytes_read, BLOCK_SIZE_BYTES);
     ASSERT_EQ(memcmp(read_buffer, write_buffer, BLOCK_SIZE_BYTES), 0);
 
+
     free(read_buffer);
     free(write_buffer);
     block_store_destroy(bs);
