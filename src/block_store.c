@@ -118,15 +118,8 @@ size_t block_store_read(const block_store_t *const bs, const size_t block_id, vo
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS || buffer == NULL){
         return 0;
     }
-    
-    //memcpy(buffer, bs[block_id].data, BLOCK_SIZE_BYTES);
-
-    const uint8_t *temp = bitmap_export(bs[block_id].data);
-    //temp = bitmap_export(bs[block_id].data);
-
-    //buffer = (void *) bitmap_export(bs[block_id].data);
-
-    memcpy(buffer, temp, BLOCK_SIZE_BYTES);
+        
+    memcpy(buffer, bs[block_id].data->data, BLOCK_SIZE_BYTES/8);
 
     return BLOCK_SIZE_BYTES;
 }
