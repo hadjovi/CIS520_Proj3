@@ -166,7 +166,7 @@ block_store_t *block_store_deserialize(const char *const filename)
 
 size_t block_store_serialize(const block_store_t *const bs, const char *const filename)
 {
-    //Error Checking
+    //Parameter validation for filename and block store 
     if(filename == NULL || bs == NULL){
         return 0;
     }
