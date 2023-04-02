@@ -231,7 +231,7 @@ size_t block_store_write(block_store_t *const bs, const size_t block_id, const v
         return 0;
     }
     
-    bs->Bmaps[block_id] = *bitmap_import(BLOCK_SIZE_BYTES, buffer);
+    bs->Bmaps[block_id] = *bitmap_import(BLOCK_SIZE_BYTES*8, buffer);
     // int i;
     // for(i = 0; i < 8; i++)
     // {
