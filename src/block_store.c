@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 // include more if you need
 
@@ -13,46 +14,130 @@
 // remove it before you submit. Just allows things to compile initially.
 #define UNUSED(x) (void)(x)
 
-struct block_store{
-    bitmap_t *data;
-};
+// typedef struct
+// {
+//     bitmap_t *bmap;
+// }block_t;
 
+// struct block_store
+// {      
+//     block_t *blocks;
+// };
+
+struct block_store
+{      
+    bitmap_t *Bmaps;
+};
+// block_t *create_single_block()
+// {
+//   //create origins bitmap
+//   bitmap_t *bmOrigin = bitmap_create(BITMAP_SIZE_BYTES * 8);
+  
+//   //Allocate space for one full block
+//   block_t *block_single = malloc(8 * sizeof(bmOrigin));
+  
+//   //create generic block
+//   int i;
+//   for(i = 0; i < 8; i++)
+//   {
+//     block_single[i].bmap = bitmap_create(BITMAP_SIZE_BYTES * 8);
+//   }
+  
+//   free(bmOrigin);
+  
+//   return block_single;
+// }
+
+// block_t *free_block_map()
+// {
+//   //create origins bitmap
+//   bitmap_t *bmOrigin = bitmap_create(BITMAP_SIZE_BYTES * 8);
+  
+//   //Allocate space for free_block_map
+//   block_t *free_block_map = malloc(sizeof(bmOrigin));
+  
+//   //create generic block
+  
+//   free_block_map[0].bmap = bitmap_create(BITMAP_SIZE_BYTES * 8);
+  
+//   free(bmOrigin);
+
+//   return free_block_map;
+// }
+
+// block_store_t *block_store_create()
+// {
+//     //create origins block
+//     block_t *blockOrigin = create_single_block();
+        
+//     //Allocate space for blockStore
+//     block_store_t *bs = malloc(BLOCK_STORE_NUM_BLOCKS * sizeof(block_t));
+    
+//     //create blockStore
+//     int i;
+    
+//     for(i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+//     {
+//         if(i == 127)
+//         {
+//             bs[i].blocks = free_block_map();
+//         }
+//         else
+//         {
+//             bs[i].blocks = create_single_block();
+//         }      
+//     }   
+    
+//     free(blockOrigin);
+
+//     return bs;
+// }
 
 block_store_t *block_store_create()
 {
-    bitmap_t *test = bitmap_create(BITMAP_SIZE_BYTES * 8);
+    //create one bs
+    block_store_t *bs = malloc(sizeof(block_store_t));
+        
+    //Allocate space for bmap list
+    bs->Bmaps = malloc(BLOCK_STORE_NUM_BLOCKS * sizeof(bitmap_t));
     
-    block_store_t *bs = malloc(BLOCK_STORE_NUM_BLOCKS * sizeof(test));
+    //create blockStore
+    int i;
     
-    for(int j = 0; j < BLOCK_STORE_NUM_BLOCKS; j++){
-        bs[j].data = bitmap_create(BITMAP_SIZE_BYTES * 8);
-    }
+    for(i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+    {
+        if(i == 127)
+        {
+            bs->Bmaps[i] = *bitmap_create(BITMAP_SIZE_BYTES*8);
+        }
+        else
+        {
+            bs->Bmaps[i] = *bitmap_create(BLOCK_SIZE_BYTES*8);
+        }      
+    } 
     
-    free(test);
+    printf("Done Creating");
     return bs;
 }
 
 
 void block_store_destroy(block_store_t *const bs)
 {
-    int c = 0;
+    printf("Begins destruction");
     if(bs == NULL){
         return;
     }
     if(bs)
     {
-        for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
-        {            
-            //printf(" Block num: %d\n", c);
-            c++;
-            if(bs[i].data)
-            {
-                bitmap_destroy(bs[i].data);
-            }            
-        }
-        //bitmap_destroy(bs->data);
+        // for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+        // {
+            
+        //     bitmap_destroy(&bs->Bmaps[i]);
+            
+        // }
+        bitmap_destroy(bs->Bmaps);
     }
-    free(bs);
+    //free(bs);
 }
 
 size_t block_store_allocate(block_store_t *const bs)
@@ -60,14 +145,14 @@ size_t block_store_allocate(block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    size_t bit = bitmap_ffz(bs[126].data);
+    size_t bit = bitmap_ffz(&bs->Bmaps[127]);
     if(bit >= BLOCK_STORE_AVAIL_BLOCKS){
         return SIZE_MAX;
     }
     if(bit == SIZE_MAX){
         return SIZE_MAX;
     }
-    bitmap_set(bs[126].data, bit);
+    bitmap_set(&bs->Bmaps[127], bit);
     return bit;
 }
 
@@ -76,10 +161,10 @@ bool block_store_request(block_store_t *const bs, const size_t block_id)
    if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS){
         return false;
     }
-    if(bitmap_test(bs[126].data, block_id)){
+    if(bitmap_test(&bs->Bmaps[127], block_id)){
 		return false;
 	}
-    bitmap_set(bs[126].data,block_id);
+    bitmap_set(&bs->Bmaps[127], block_id);
     return true;
 }
 
@@ -88,7 +173,7 @@ void block_store_release(block_store_t *const bs, const size_t block_id)
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS){
         return;
     }
-    bitmap_reset(bs[126].data,block_id);
+    bitmap_reset(&bs->Bmaps[127], block_id);
 }
 
 size_t block_store_get_used_blocks(const block_store_t *const bs)
@@ -96,7 +181,7 @@ size_t block_store_get_used_blocks(const block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    return bitmap_total_set(bs[126].data);
+    return bitmap_total_set(&bs->Bmaps[127]);
 }
 
 size_t block_store_get_free_blocks(const block_store_t *const bs)
@@ -104,7 +189,7 @@ size_t block_store_get_free_blocks(const block_store_t *const bs)
     if(bs == NULL){
         return SIZE_MAX;
     }
-    return BLOCK_STORE_AVAIL_BLOCKS - bitmap_total_set(bs[126].data);
+    return BLOCK_STORE_AVAIL_BLOCKS - bitmap_total_set(&bs->Bmaps[127]);
 }
 
 size_t block_store_get_total_blocks()
@@ -119,7 +204,22 @@ size_t block_store_read(const block_store_t *const bs, const size_t block_id, vo
         return 0;
     }
         
-    memcpy(buffer, bs[block_id].data->data, BLOCK_SIZE_BYTES/8);
+    memcpy(buffer, bitmap_export(&bs->Bmaps[block_id]), BLOCK_SIZE_BYTES);
+
+    //bitmap_export(&bs->Bmaps[block_id]);
+    // memcpy(buffer, bs[block_id].blocks[0].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[1].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[2].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[3].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[4].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[5].bmap, BITMAP_SIZE_BYTES);
+    // memcpy(buffer, bs[block_id].blocks[6].bmap, BITMAP_SIZE_BYTES);
+
+    // int i;
+    // for(i = 0; i < 8; i++)
+    // {
+    //     memcpy(buffer+(BITMAP_SIZE_BYTES*i), bs[block_id].blocks[0].bmap, BITMAP_SIZE_BYTES);
+    // }
 
     return BLOCK_SIZE_BYTES;
 }
@@ -131,16 +231,12 @@ size_t block_store_write(block_store_t *const bs, const size_t block_id, const v
         return 0;
     }
     
-    // int c = 0;
-
-    // while(buffer != '\0')
+    bs->Bmaps[block_id] = *bitmap_import(BLOCK_SIZE_BYTES, buffer);
+    // int i;
+    // for(i = 0; i < 8; i++)
     // {
-    //     c++;
-    //     buffer++;
+    //     bs[block_id].blocks[0].bmap = bitmap_import(BITMAP_SIZE_BYTES, buffer+(BITMAP_SIZE_BYTES*i));
     // }
-    //memcpy(bs[block_id].data, buffer, BLOCK_SIZE_BYTES);
-    //const bitmap_t *temp = import(BLOCK_SIZE_BYTES, buffer);
-    bs[block_id].data = bitmap_import(BLOCK_SIZE_BYTES, buffer);
 
     return BLOCK_SIZE_BYTES;
 }
@@ -152,34 +248,63 @@ block_store_t *block_store_deserialize(const char *const filename)
         return NULL;
     }
 
-    int i = 0;
-    while(((char*)filename)[i] != '\0'){
-        if(((char*)filename)[i] == '\n'){
-            return false;
+    int k = 0;
+    while(((char*)filename)[k] != '\0'){
+        if(((char*)filename)[k] == '\n'){
+            return NULL;
         }
-        i++;
+        k++;
     }
 
     //Open the file to read
-    int fd = open(filename, O_RDONLY | S_IROTH);
+    int fd = open(filename, O_RDONLY, 0777);
     if(fd == -1){
-        printf("FAILED TO OPEN DESER");
         return NULL;
     }
 
-    void * buffer = malloc(BLOCK_STORE_NUM_BYTES);
+    block_store_t *bs = block_store_create();
+    
+    // int j;
+    // for(j = 0; j < BLOCK_STORE_NUM_BLOCKS; j++)
+    // {
+    //     read(fd,bs[i].data,sizeof(bs[i].data));
+    // }
 
-    if(read(fd, buffer, BLOCK_SIZE_BYTES)  == -1){
-        close(fd);
-        printf("FAILED TO READ DESER");
-        return false;
+    // for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+    // {            
+    //     if(i == 127)
+    //     {
+    //         if(bs[i].blocks[0].bmap)
+    //         {
+    //             read(fd,bs[i].blocks[0].bmap,sizeof(bs[i].blocks[0].bmap));
+    //         }
+    //         else
+    //         { 
+    //             return NULL;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         for(int j = 0; j < 8; j++)
+    //         {
+    //             if(bs[i].blocks[j].bmap)
+    //             {
+    //                 read(fd,bs[i].blocks[j].bmap,sizeof(bs[i].blocks[j].bmap));
+    //             }
+    //             else
+    //             { 
+    //                 return NULL;
+    //             }
+    //         }
+    //     }            
+    // }
+    for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+    {            
+       read(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
     }
 
-    //Read in the file using the read function
-
-    block_store_t *bs = malloc(BLOCK_STORE_NUM_BYTES);
-    memcpy(bs, buffer, BLOCK_STORE_NUM_BYTES);
     close(fd);
+
     return bs;
 }
 
@@ -190,25 +315,62 @@ size_t block_store_serialize(const block_store_t *const bs, const char *const fi
         return 0;
     }
 
-    int i = 0;
-    while(((char*)filename)[i] != '\0'){
-        if(((char*)filename)[i] == '\n'){
+    int k = 0;
+    while(((char*)filename)[k] != '\0'){
+        if(((char*)filename)[k] == '\n'){
+            printf("BAD FILENAME\n");
             return 0;
         }
-        i++;
+        k++;
     }
-    printf("FN Good\n");
 
     //Open(or create) the file for writing
-    int fd = open(filename, O_WRONLY | O_CREAT | S_IROTH | S_IWOTH);
+    int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0777);
     if(fd == -1){
-        printf("FAILED TO OPEN DESER");
+        printf("FAILED TO OPEN\n");
         return 0;
     }
+    
+    // int j;
+    // for(j = 0; j < BLOCK_STORE_NUM_BLOCKS; j++)
+    // {
+    //     write(fd,bs[i].data,sizeof(bs[i].data));
+    // }
+    //write(fd,bs,BLOCK_STORE_NUM_BYTES);
 
-    printf("FD OPEN\n");
-    void * buffer = malloc(BLOCK_STORE_NUM_BYTES);
-    memcpy(buffer, bs, BLOCK_STORE_NUM_BYTES);
+    // for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+    // {            
+    //     if(i == 127)
+    //     {
+    //         if(bs[i].blocks[0].bmap)
+    //         {
+    //             write(fd,bs[i].blocks[0].bmap,sizeof(bs[i].blocks[0].bmap));
+    //         }
+    //         else
+    //         { 
+    //             return 0;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         for(int j = 0; j < 8; j++)
+    //         {
+    //             if(bs[i].blocks[j].bmap)
+    //             {
+    //                 write(fd,bs[i].blocks[j].bmap,sizeof(bs[i].blocks[j].bmap));
+    //             }
+    //             else
+    //             { 
+    //                 return 0;
+    //             }
+    //         }
+    //     }            
+    // }
+
+    for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
+    {            
+       write(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
+    }
 
     close(fd);
 

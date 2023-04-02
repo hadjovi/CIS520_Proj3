@@ -36,6 +36,7 @@ TEST(block_store_create, create) {
     bs = block_store_create();
     ASSERT_NE(nullptr, bs) << "block_store_create returned NULL when it should not have\n";
     // The below line will only run if the block store was created successfully.
+
     block_store_destroy(bs);
 
     score += 3;
@@ -447,8 +448,7 @@ TEST(block_store_deserialize, valid_deserialize)
     // to the read
     //free(write_buffer);
     block_store_destroy(bsWrite);
-
-
+    
     block_store_t *bsRead = NULL;
 
     // Try to call deserialize...
