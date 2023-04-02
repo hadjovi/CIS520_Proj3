@@ -130,7 +130,7 @@ size_t block_store_get_total_blocks()
 
 size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer)
 {
-    //Parameter Checking
+    //Parameter validation for the blockstore existing, block id is within the number of blocks, and the buffer exists
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS || buffer == NULL){
         return 0;
     }
@@ -144,23 +144,24 @@ size_t block_store_read(const block_store_t *const bs, const size_t block_id, vo
 
 size_t block_store_write(block_store_t *const bs, const size_t block_id, const void *buffer)
 {
-    //Parameter Checking
+    //Parameter validation for the blockstore existing, block id is within the number of blocks, and the buffer exists
     if(bs == NULL || block_id > BLOCK_STORE_NUM_BLOCKS || buffer == NULL){
+	// if not true return 0 for error
         return 0;
     }
-    
+    //import the bitmap made by the buffer into the block store at the location defined by block_id
     bs->Bmaps[block_id] = *bitmap_import(BLOCK_SIZE_BYTES*8, buffer);
-
+    //return the size write as a bitmap size
     return BLOCK_SIZE_BYTES;
 }
 
 block_store_t *block_store_deserialize(const char *const filename)
 {
-    //Error Checking
+    //Parameter validation for filename
     if(filename == NULL){
         return NULL;
     }
-
+    //parameter validation to make sure the filename is a valid filename
     int k = 0;
     while(((char*)filename)[k] != '\0'){
         if(((char*)filename)[k] == '\n'){
@@ -169,31 +170,34 @@ block_store_t *block_store_deserialize(const char *const filename)
         k++;
     }
 
-    //Open the file to read
+    //Open the file to read only, using the 0777 permissions just to make sure the file was accessible
     int fd = open(filename, O_RDONLY, 0777);
+    // error checking for open function
     if(fd == -1){
+	// return 0 since error
         return NULL;
     }
-
+    //create a blockstore for the data that being read in
     block_store_t *bs = block_store_create();
-    
+    //loop through the blockstore, placing data into each bitmap
     for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
-    {            
+    {
+       //reading in the data one bitmap at a time
        read(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
     }
-
+    //close the file
     close(fd);
-
+    //return the new blockstore that was read in
     return bs;
 }
 
 size_t block_store_serialize(const block_store_t *const bs, const char *const filename)
 {
-    //Error Checking
+    //Parameter validation for filename and block store 
     if(filename == NULL || bs == NULL){
         return 0;
     }
-
+    //parameter validation to make sure the filename is a valid filename
     int k = 0;
     while(((char*)filename)[k] != '\0'){
         if(((char*)filename)[k] == '\n'){
@@ -202,18 +206,22 @@ size_t block_store_serialize(const block_store_t *const bs, const char *const fi
         k++;
     }
 
-    //Open(or create) the file for writing
+    //Open(or create) the file for writing, truncate if file is already written to
+    // We used the 0777 permissions just to make sure the file was accessible
     int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+    // error checking for open function
     if(fd == -1){
+	// return 0 since error
         return 0;
     }
-
+    // loop through each bitmap in the block store and write the data
+    // to the file.
     for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
     {            
        write(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
     }
-
+    // close the file descriptor after writing is done.
     close(fd);
-    
+    // number of bytes written, due to the constraints of the system we always
     return BLOCK_STORE_NUM_BYTES;
 }
