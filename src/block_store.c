@@ -182,8 +182,10 @@ block_store_t *block_store_deserialize(const char *const filename)
     //loop through the blockstore, placing data into each bitmap
     for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
     {
-       //reading in the data one bitmap at a time
-       read(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
+        //reading in the data one bitmap at a time, if read fails, return NULL
+        if(read(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES) == -1){
+            return NULL;
+        }
     }
     //close the file
     close(fd);
@@ -217,8 +219,11 @@ size_t block_store_serialize(const block_store_t *const bs, const char *const fi
     // loop through each bitmap in the block store and write the data
     // to the file.
     for(int i = 0; i < BLOCK_STORE_NUM_BLOCKS; i++)
-    {            
-       write(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES);        
+    {        
+        //Checks for an error in the write, returns 0 for bad write    
+        if(write(fd, &bs->Bmaps[i], BLOCK_SIZE_BYTES)== -1){
+            return 0;
+        }
     }
     // close the file descriptor after writing is done.
     close(fd);
